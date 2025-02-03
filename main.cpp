@@ -45,32 +45,42 @@ double benchmark_spmv(cholmod_sparse* A, int n, cholmod_common* c) {
     return time_taken;
 }
 
-int main() {
-    cholmod_common c;
-    cholmod_start(&c);
-
-    std::ofstream csv_file("benchmark_results.csv");
-    csv_file << "Matrix_Size,Nonzeros,SpMV_Time(s)\n";
-
-    std::vector<int> sizes = {1000, 5000, 10000, 20000};
-    for (int n : sizes) {
-        int nnz = n * 10;  // Set sparsity to 10x rows
-        cholmod_sparse* A = generate_sparse_matrix(n, n, nnz, &c);
-
-        if (!A) {
-            std::cerr << "Matrix generation failed for size " << n << std::endl;
-            continue;
-        }
-
-        double time_taken = benchmark_spmv(A, n, &c);
-        std::cout << "SpMV for " << n << "x" << n << " matrix took " << time_taken << " seconds." << std::endl;
-
-        csv_file << n << "," << nnz << "," << time_taken << "\n";
-
-        cholmod_free_sparse(&A, &c);
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <matrix_size>" << std::endl;
+        return 1;
     }
 
+    int n = std::atoi(argv[1]);  // Convert argument to integer
+    if (n <= 0) {
+        std::cerr << "Error: Matrix size must be a positive integer." << std::endl;
+        return 1;
+    }
+
+    cholmod_common c;
+    cholmod_start(&c);
+    std::string csv_file_name = "benchmark_results_" + std::to_string(n) + ".csv";
+    std::ofstream csv_file(csv_file_name);
+    csv_file << "Matrix_Size,Nonzeros,SpMV_Time(s)\n";
+
+    int nnz = n * 10;  // Set sparsity to 10x rows
+    cholmod_sparse* A = generate_sparse_matrix(n, n, nnz, &c);
+
+    if (!A) {
+        std::cerr << "Matrix generation failed for size " << n << std::endl;
+        cholmod_finish(&c);
+        return 1;
+    }
+
+    double time_taken = benchmark_spmv(A, n, &c);
+    std::cout << "SpMV for " << n << "x" << n << " matrix took " << time_taken << " seconds." << std::endl;
+
+    csv_file << n << "," << nnz << "," << time_taken << "\n";
+
+    // Free memory
+    cholmod_free_sparse(&A, &c);
     csv_file.close();
     cholmod_finish(&c);
+
     return 0;
 }
