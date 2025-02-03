@@ -1,8 +1,9 @@
+#include <chrono>
 #include <iostream>
 #include <cstdlib>
 #include "cholmod.h"
 
-cholmod_sparse* generate_symmetric_sparse_matrix(int n, int nnz, cholmod_common* c) {
+cholmod_sparse* generate_symmetric_sparse_matrix(int n, size_t nnz, cholmod_common* c) {
     cholmod_triplet* T = cholmod_allocate_triplet(n, n, nnz, 1, CHOLMOD_REAL, c);
     if (!T) {
         std::cerr << "Failed to allocate triplet matrix" << std::endl;
