@@ -6,6 +6,10 @@
 #include "cholmod.h"
 
 cholmod_sparse* generate_sparse_matrix(int rows, int cols, size_t nnz, cholmod_common* c) {
+    std::cout << "Attempting to generate matrix with " << nnz << " non zeroes\n";
+    c->nthreads_max = 96;
+    std::cout << "CHOLMOD OpenMP Threads: " << c->nthreads_max << std::endl;
+
     cholmod_triplet* T = cholmod_allocate_triplet(rows, cols, nnz, 0, CHOLMOD_REAL, c);
     if (!T) {
         std::cerr << "Failed to allocate triplet matrix" << std::endl;

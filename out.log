@@ -1,0 +1,9 @@
+g++ -o main main.cpp -std=c++17 -lcholmod -lamd -lcolamd -lccolamd -lcamd -lsuitesparseconfig -lm
+n: 2317047
+Start time:
+Mon Feb  3 15:35:18 CST 2025
+Attempting to generate matrix with 53687068002 non zeroes
+CHOLMOD OpenMP Threads: 96
+SpMV for 2317047x2317047 matrix took 0.00387011 seconds.
+End time:
+Mon Feb  3 15:38:27 CST 2025
