@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     std::ofstream csv_file(csv_file_name);
     csv_file << "Matrix_Size,Nonzeros,SpMV_Time(s)\n";
 
-    int nnz = n * 10;  // Set sparsity to 10x rows
+    int nnz = n * n / 100;  // Set sparsity to ~1% nonzero
     cholmod_sparse* A = generate_sparse_matrix(n, n, nnz, &c);
 
     if (!A) {
