@@ -33,7 +33,9 @@ double benchmark_spmv(cholmod_sparse* A, int n, cholmod_common* c) {
     cholmod_dense* y = cholmod_zeros(n, 1, CHOLMOD_REAL, c);
 
     auto start = std::chrono::high_resolution_clock::now();
-    cholmod_sdmult(A, 0, (double[2]){1,0}, (double[2]){0,0}, x, y, c);
+    double a[2] = {1, 0};
+    double b[2] = {0, 0}; 
+    cholmod_sdmult(A, 0, a, b, x, y, c);
     auto end = std::chrono::high_resolution_clock::now();
 
     double time_taken = std::chrono::duration<double>(end - start).count();
