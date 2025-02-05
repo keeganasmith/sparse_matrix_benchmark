@@ -5,20 +5,22 @@
 #SBATCH --output=out.log --error=error.log
 #SBATCH --partition=staff
 module purge
-module load GCC/13.2.0 FFTW/3.3.10
+ml GCC/13.3.0
+ml OpenMPI/5.0.3
+ml SuiteSparse/7.7.0-METIS-5.1.0
 export WATCH_SECONDS=1
-cd /scratch/user/u.ks124812/wes_benchmarking/sparse_matrix_benchmarking
-make
-for(( j=0 ; j<3 ; j++ ))
+cd /scratch/user/u.ks124812/wes_benchmarking/sparse_matrix_benchmark
+make -B
+for(( j=0 ; j<1 ; j++ ))
 do
-  for i in 48; do
+  for i in 2317047; do
     watch -n $WATCH_SECONDS "cat /proc/meminfo >> ./meminfo_output_run_$j/meminfo_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./meminfo_output_run_$j/meminfo_$i.log" &> /dev/null &
     watch -n $WATCH_SECONDS "ps -p $(pgrep -f "main") -o %cpu,%mem,cmd --no-headers >>./ps_output_run_$j/ps_output_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./ps_output_run_$j/ps_output_$i.log" &> /dev/null &
     watch -n $WATCH_SECONDS "free -h >> ./free_output_run_$j/free_output_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./free_output_run_$j/free_output_$i.log" &> /dev/null &
-        echo num_threads: $i
+        echo n: $i
         echo Start time:
         date
-        ./main -n $i
+        ./main $i
         echo End time:
         date
         killall -9 watch
