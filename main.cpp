@@ -2,9 +2,9 @@
 #include <iostream>
 #include <cstdlib>
 #include "cholmod.h"
-
+#include <omp.h>
 cholmod_sparse* generate_symmetric_sparse_matrix(int n, size_t nnz, cholmod_common* c) {
-    cholmod_triplet* T = cholmod_allocate_triplet(n, n, nnz, 1, CHOLMOD_REAL, c);
+    cholmod_triplet* T = cholmod_allocate_triplet(n, n, nnz + n, 1, CHOLMOD_REAL, c);
     if (!T) {
         std::cerr << "Failed to allocate triplet matrix" << std::endl;
         return nullptr;
@@ -14,22 +14,30 @@ cholmod_sparse* generate_symmetric_sparse_matrix(int n, size_t nnz, cholmod_comm
     int* row_indices = static_cast<int*>(T->i);
     int* col_indices = static_cast<int*>(T->j);
 
+    #pragma omp parallel for
     for (int i = 0; i < nnz; i++) {
         int r = rand() % n;
         int c = rand() % n;
-        if (r > c) std::swap(r, c);  
+        if (r > c) std::swap(r, c);
 
         row_indices[i] = r;
         col_indices[i] = c;
-        values[i] = static_cast<double>(rand()) / RAND_MAX + 1.0;  
+        values[i] = static_cast<double>(rand()) / RAND_MAX + 1.0;
     }
 
-    T->nnz = nnz;
-    cholmod_sparse* A = cholmod_triplet_to_sparse(T, nnz, c);
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        row_indices[nnz + i] = i;
+        col_indices[nnz + i] = i;
+        values[nnz + i] = n; 
+    }
+
+    T->nnz = nnz + n;
+
+    cholmod_sparse* A = cholmod_triplet_to_sparse(T, nnz + n, c);
     cholmod_free_triplet(&T, c);
     return A;
 }
-
 double benchmark_cholesky(cholmod_sparse* A, cholmod_common* c) {
     cholmod_factor* L = cholmod_analyze(A, c);
     if (!L) {
@@ -48,6 +56,7 @@ double benchmark_cholesky(cholmod_sparse* A, cholmod_common* c) {
 }
 
 int main(int argc, char* argv[]) {
+    omp_set_num_threads(96);
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <matrix_size>" << std::endl;
         return 1;
@@ -62,9 +71,9 @@ int main(int argc, char* argv[]) {
     cholmod_common c;
     cholmod_start(&c);
     std::cout << "using " << c.nthreads_max << " threads\n";
-    c.nthreads_max = 96;  
 
     size_t nnz = n * n / 100;
+    std::cout << "Num nonzeroes: " << nnz << "\n";
     cholmod_sparse* A = generate_symmetric_sparse_matrix(n, nnz, &c);
 
     if (!A) {
