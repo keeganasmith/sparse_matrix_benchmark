@@ -5,28 +5,23 @@
 #include "cholmod.h"
 
 cholmod_sparse* generate_sparse_matrix(int n, size_t nnz, cholmod_common* c) {
-    cholmod_triplet* T = cholmod_allocate_triplet(n, n, nnz + n, 0, CHOLMOD_REAL, c);
+    cholmod_triplet* T = cholmod_allocate_triplet(n, n, nnz, 0, CHOLMOD_REAL, c);
     if (!T) {
         std::cerr << "Failed to allocate triplet matrix" << std::endl;
         return nullptr;
     }
-
+    
     double* values = static_cast<double*>(T->x);
     int* row_indices = static_cast<int*>(T->i);
     int* col_indices = static_cast<int*>(T->j);
-
     #pragma omp parallel for
     for (int i = 0; i < nnz; i++) {
-        int r = rand() % n;
-        int c = rand() % n;
-        row_indices[i] = r;
-        col_indices[i] = c;
-        values[i] = static_cast<double>(rand()) / RAND_MAX + 1.0;
+        row_indices[i] = rand() % n;
+        col_indices[i] = rand() % n;
+        values[i] = static_cast<double>(rand()) / RAND_MAX;
     }
-
-    T->nnz = nnz + n;
-
-    cholmod_sparse* A = cholmod_triplet_to_sparse(T, nnz + n, c);
+    T->nnz = nnz;
+    cholmod_sparse* A = cholmod_triplet_to_sparse(T, nnz, c);
     cholmod_free_triplet(&T, c);
     return A;
 }
