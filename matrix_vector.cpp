@@ -4,32 +4,32 @@
 #include <omp.h>
 #include "cholmod.h"
 
-cholmod_sparse* generate_sparse_matrix(int n, size_t nnz, cholmod_common* c) {
-    cholmod_triplet* T = cholmod_allocate_triplet(n, n, nnz, 0, CHOLMOD_REAL, c);
+cholmod_sparse* generate_sparse_matrix(SuiteSparse_long n, size_t nnz, cholmod_common* c) {
+    cholmod_triplet* T = cholmod_allocate_triplet(n, n, (SuiteSparse_long) nnz, 0, CHOLMOD_REAL, c);
     if (!T) {
         std::cerr << "Failed to allocate triplet matrix" << std::endl;
         return nullptr;
     }
     
     double* values = static_cast<double*>(T->x);
-    int* row_indices = static_cast<int*>(T->i);
-    int* col_indices = static_cast<int*>(T->j);
+    SuiteSparse_long* row_indices = static_cast<SuiteSparse_long*>(T->i);
+    SuiteSparse_long* col_indices = static_cast<SuiteSparse_long*>(T->j);
 
     #pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(nnz); i++) {
+    for (SuiteSparse_long i = 0; i < (SuiteSparse_long) nnz; i++) {
         row_indices[i] = rand() % n;
         col_indices[i] = rand() % n;
         values[i] = static_cast<double>(rand()) / RAND_MAX;
     }
-    T->nnz = nnz;
+    T->nnz = (SuiteSparse_long) nnz;
     
-    cholmod_sparse* A = cholmod_triplet_to_sparse(T, nnz, c);
+    cholmod_sparse* A = cholmod_triplet_to_sparse(T, (SuiteSparse_long) nnz, c);
     cholmod_free_triplet(&T, c);
     return A;
 }
 
 double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common* c) {
-    int n = A->nrow;  
+    SuiteSparse_long n = A->nrow;  
     cholmod_dense* x = cholmod_zeros(n, 1, CHOLMOD_REAL, c);
     if (!x) {
         std::cerr << "Failed to allocate dense vector x." << std::endl;
@@ -38,7 +38,7 @@ double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common*
     
     double* x_values = static_cast<double*>(x->x);
     #pragma omp parallel for
-    for (int i = 0; i < n; i++) {
+    for (SuiteSparse_long i = 0; i < n; i++) {
         x_values[i] = static_cast<double>(rand()) / RAND_MAX;
     }
     
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    size_t n = std::atoi(argv[1]);
+    SuiteSparse_long n = std::atoll(argv[1]);
     if (n <= 0) {
         std::cerr << "Error: Matrix size must be a positive integer." << std::endl;
         return 1;
