@@ -27,6 +27,7 @@ cholmod_sparse* generate_sparse_matrix(long long n, size_t nnz, cholmod_common* 
   double* values = static_cast<double*>(T->x);
   long long* row_indices = static_cast<long long*>(T->i);
   long long* col_indices = static_cast<long long*>(T->j);
+  #pragma omp parallel for
   for (long long i = 0; i < (long long) nnz; i++) {
       row_indices[i] = rand() % n;
       col_indices[i] = rand() % n;
@@ -44,12 +45,30 @@ cholmod_sparse* generate_sparse_matrix(long long n, size_t nnz, cholmod_common* 
   return A;
 }
 
-double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common* c) {
-  long long n = A->nrow;  
+cholmod_dense* generate_random_dense_vector(cholmod_common* c, long long n, bool is_x_vector){
+  string x_string = "x";
+  if(!is_x_vector){
+    x_string = "y";
+  }
+
+  string file_name = "./vectors/random_vector_"+ x_string + "_" + to_string(n) + ".mtx";
+  FILE* file = fopen(file_name.c_str(), "r");
+  if (file) {
+    cholmod_dense* x = cholmod_l_read_dense(file, c);
+    fclose(file);
+
+    if (!x) {
+        std::cerr << "Failed to load vector from file" << std::endl;
+        return nullptr;
+    }
+
+    std::cout << "Vector loaded successfully." << std::endl;
+    return x;
+  }
   cholmod_dense* x = cholmod_l_zeros(n, 1, CHOLMOD_REAL, c);
   if (!x) {
       std::cerr << "Failed to allocate dense vector x." << std::endl;
-      return -1;
+      return nullptr;
   }
   
   double* x_values = static_cast<double*>(x->x);
@@ -57,14 +76,16 @@ double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common*
   for (long long i = 0; i < n; i++) {
       x_values[i] = static_cast<double>(rand()) / RAND_MAX;
   }
-  
-  cholmod_dense* y = cholmod_l_zeros(n, 1, CHOLMOD_REAL, c);
-  if (!y) {
-      std::cerr << "Failed to allocate dense vector y." << std::endl;
-      cholmod_l_free_dense(&x, c);
-      return -1;
-  }
-  
+  file = fopen(file_name.c_str(), "w");
+  cholmod_l_write_dense(file, x, nullptr, c);
+  fclose(file);
+  std::cout << "Matrix saved to " << file_name << "\n";
+  return x;
+}
+double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common* c) {
+  long long n = A->nrow;  
+  cholmod_dense* x = generate_random_dense_vector(c, n, true);
+  cholmod_dense* y = generate_random_dense_vector(c, n, false); 
   double alpha = 1.0, beta = 0.0;
   auto start = std::chrono::high_resolution_clock::now();
   cholmod_l_sdmult(A, 0, &alpha, &beta, x, y, c);
