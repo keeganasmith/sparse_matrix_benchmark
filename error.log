@@ -1,4 +1,0 @@
-/var/spool/slurmd/job645212/slurm_script: line 16: 595078 Killed                  watch -n $WATCH_SECONDS "cat /proc/meminfo >> ./meminfo_output_run_$j/meminfo_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./meminfo_output_run_$j/meminfo_$i.log" &> /dev/null
-/var/spool/slurmd/job645212/slurm_script: line 16: 595079 Killed                  watch -n $WATCH_SECONDS "ps -p $(pgrep -f "main") -o %cpu,%mem,cmd --no-headers >>./ps_output_run_$j/ps_output_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./ps_output_run_$j/ps_output_$i.log" &> /dev/null
-/var/spool/slurmd/job645212/slurm_script: line 16: 595080 Killed                  watch -n $WATCH_SECONDS "free -h >> ./free_output_run_$j/free_output_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./free_output_run_$j/free_output_$i.log" &> /dev/null
-watch: no process found
