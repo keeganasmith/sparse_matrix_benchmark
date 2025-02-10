@@ -5,20 +5,6 @@
 #include "cholmod.h"
 using std::string, std::to_string;
 cholmod_sparse* generate_sparse_matrix(long long n, size_t nnz, cholmod_common* c) {
-  string file_name = "./matrices/random_matrix_" + to_string(n) + "x" + to_string(n) + ".mtx";
-  FILE* file = fopen(file_name.c_str(), "r");
-  if (file) {
-    cholmod_sparse* A = cholmod_l_read_sparse(file, c);
-    fclose(file);
-
-    if (!A) {
-        std::cerr << "Failed to load matrix from file" << std::endl;
-        return nullptr;
-    }
-
-    std::cout << "Matrix loaded successfully." << std::endl;
-    return A;
-  } 
   cholmod_triplet* T = cholmod_l_allocate_triplet(n, n, (long long) nnz, 0, CHOLMOD_REAL, c);
   if (!T) {
       std::cerr << "Failed to allocate triplet matrix" << std::endl;
@@ -29,42 +15,19 @@ cholmod_sparse* generate_sparse_matrix(long long n, size_t nnz, cholmod_common* 
   long long* col_indices = static_cast<long long*>(T->j);
   #pragma omp parallel for
   for (long long i = 0; i < (long long) nnz; i++) {
-      row_indices[i] = rand() % n;
-      col_indices[i] = rand() % n;
-      values[i] = static_cast<double>(rand()) / RAND_MAX;
+      unsigned int myseed = omp_get_thread_num();
+      row_indices[i] = rand_r(&myseed) % n;
+      col_indices[i] = rand_r(&myseed) % n;
+      values[i] = static_cast<double>(rand_r(&myseed)) / RAND_MAX;
   }
   T->nnz = nnz;
 
   cholmod_sparse* A = cholmod_l_triplet_to_sparse(T, nnz, c);
   cholmod_l_free_triplet(&T, c);
-  file = fopen(file_name.c_str(), "w");
-  cholmod_l_write_sparse(file, A, nullptr, nullptr, c);
-  fclose(file);
-
-  std::cout << "Matrix saved to " << file_name << "\n";
   return A;
 }
 
 cholmod_dense* generate_random_dense_vector(cholmod_common* c, long long n, bool is_x_vector){
-  string x_string = "x";
-  if(!is_x_vector){
-    x_string = "y";
-  }
-
-  string file_name = "./vectors/random_vector_"+ x_string + "_" + to_string(n) + ".mtx";
-  FILE* file = fopen(file_name.c_str(), "r");
-  if (file) {
-    cholmod_dense* x = cholmod_l_read_dense(file, c);
-    fclose(file);
-
-    if (!x) {
-        std::cerr << "Failed to load vector from file" << std::endl;
-        return nullptr;
-    }
-
-    std::cout << "Vector loaded successfully." << std::endl;
-    return x;
-  }
   cholmod_dense* x = cholmod_l_zeros(n, 1, CHOLMOD_REAL, c);
   if (!x) {
       std::cerr << "Failed to allocate dense vector x." << std::endl;
@@ -74,12 +37,9 @@ cholmod_dense* generate_random_dense_vector(cholmod_common* c, long long n, bool
   double* x_values = static_cast<double*>(x->x);
   #pragma omp parallel for
   for (long long i = 0; i < n; i++) {
-      x_values[i] = static_cast<double>(rand()) / RAND_MAX;
+    unsigned int myseed = omp_get_thread_num();  
+    x_values[i] = static_cast<double>(rand_r(&myseed)) / RAND_MAX;
   }
-  file = fopen(file_name.c_str(), "w");
-  cholmod_l_write_dense(file, x, nullptr, c);
-  fclose(file);
-  std::cout << "Matrix saved to " << file_name << "\n";
   return x;
 }
 double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common* c) {
