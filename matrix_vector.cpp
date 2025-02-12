@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <omp.h>
 #include "cholmod.h"
-using std::string, std::to_string;
+using std::string, std::to_string, std::cout;
 cholmod_sparse* generate_sparse_matrix(long long n, size_t nnz, cholmod_common* c) {
   cholmod_triplet* T = cholmod_l_allocate_triplet(n, n, (long long) nnz, 0, CHOLMOD_REAL, c);
   if (!T) {
@@ -13,12 +13,15 @@ cholmod_sparse* generate_sparse_matrix(long long n, size_t nnz, cholmod_common* 
   double* values = static_cast<double*>(T->x);
   long long* row_indices = static_cast<long long*>(T->i);
   long long* col_indices = static_cast<long long*>(T->j);
-  #pragma omp parallel for
-  for (long long i = 0; i < (long long) nnz; i++) {
-      unsigned int myseed = omp_get_thread_num();
-      row_indices[i] = rand_r(&myseed) % n;
-      col_indices[i] = rand_r(&myseed) % n;
-      values[i] = static_cast<double>(rand_r(&myseed)) / RAND_MAX;
+  #pragma omp parallel
+  {
+    unsigned int myseed = omp_get_thread_num();
+    #pragma omp for
+    for (long long i = 0; i < (long long) nnz; i++) {
+        row_indices[i] = (time(NULL) + rand_r(&myseed)) % n;
+        col_indices[i] = (time(NULL) + rand_r(&myseed)) % n;
+        values[i] = static_cast<double>(time(NULL) + rand_r(&myseed)) / RAND_MAX;
+    }
   }
   T->nnz = nnz;
 
@@ -35,11 +38,15 @@ cholmod_dense* generate_random_dense_vector(cholmod_common* c, long long n, bool
   }
   
   double* x_values = static_cast<double*>(x->x);
-  #pragma omp parallel for
-  for (long long i = 0; i < n; i++) {
-    unsigned int myseed = omp_get_thread_num();  
-    x_values[i] = static_cast<double>(rand_r(&myseed)) / RAND_MAX;
+  #pragma omp parallel
+  {
+    unsigned int myseed = omp_get_thread_num();
+    #pragma omp parallel for
+    for (long long i = 0; i < n; i++) {
+      x_values[i] = static_cast<double>(time(NULL) + rand_r(&myseed)) / RAND_MAX;
+    }
   }
+  cholmod_l_print_dense(x, "Dense Vector", c);
   return x;
 }
 double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common* c) {
@@ -59,10 +66,9 @@ double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common*
 }
 
 int main(int argc, char* argv[]) {
-  omp_set_num_threads(96); 
   
-  if (argc != 2) {
-      std::cerr << "Usage: " << argv[0] << " <matrix_size>" << std::endl;
+  if (argc != 3) {
+      std::cerr << "Usage: " << argv[0] << " <matrix_size> <thread_num>" << std::endl;
       return 1;
   }
   
@@ -71,7 +77,8 @@ int main(int argc, char* argv[]) {
       std::cerr << "Error: Matrix size must be a positive integer." << std::endl;
       return 1;
   }
-  
+  int num_threads = std::atoi(argv[2]);
+  omp_set_num_threads(num_threads);
   cholmod_common c;
   cholmod_l_start(&c);
   std::cout << "Using " << c.nthreads_max << " threads\n";
@@ -80,12 +87,14 @@ int main(int argc, char* argv[]) {
   std::cout << "Number of nonzeros: " << nnz << "\n";
   
   cholmod_sparse* A = generate_sparse_matrix(n, nnz, &c);
+  
   if (!A) {
       std::cerr << "Matrix generation failed for size " << n << std::endl;
       cholmod_l_finish(&c);
       return 1;
   }
-  
+  cholmod_l_print_sparse(A, "Sparse Matrix", &c);
+
   double time_taken = benchmark_sparse_vector_multiplication(A, &c);
   if (time_taken >= 0) {
       std::cout << "Sparse matrix-vector multiplication for " << n << "x" << n
