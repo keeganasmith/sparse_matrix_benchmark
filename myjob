@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=fftw
+#SBATCH --job-name=sparse_matrix
 #SBATCH --time=2:00:00 --mem=480G
 #SBATCH --ntasks=1 --nodes=1 --cpus-per-task=96
 #SBATCH --output=out.log --error=error.log
@@ -13,8 +13,11 @@ export NUM_THREADS=96
 cd /scratch/user/u.ks124812/wes_benchmarking/sparse_matrix_benchmark
 make -B vector
 for(( j=0 ; j<3 ; j++ ))
-do
+do 
   for i in 1050000; do
+    > ./meminfo_output_run_$j/meminfo_$i.log
+    > ./ps_output_run_$j/ps_output_$i.log
+    > ./free_output_run_$j/free_output_$i.log
     watch -n $WATCH_SECONDS "cat /proc/meminfo >> ./meminfo_output_run_$j/meminfo_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./meminfo_output_run_$j/meminfo_$i.log" &> /dev/null &
     watch -n $WATCH_SECONDS "ps -p $(pgrep -f "matrix_vector") -o %cpu,%mem,cmd --no-headers >>./ps_output_run_$j/ps_output_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./ps_output_run_$j/ps_output_$i.log" &> /dev/null &
     watch -n $WATCH_SECONDS "free -h >> ./free_output_run_$j/free_output_$i.log; date +'%Y-%m-%dT%H:%M:%S%z' >> ./free_output_run_$j/free_output_$i.log" &> /dev/null &
