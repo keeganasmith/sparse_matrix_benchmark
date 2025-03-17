@@ -1,0 +1,13 @@
+What i've tried:
+
+matrix vector multiplication w/compression: worked, except compression was
+using more memory on reduced dram node. 
+
+matrix vector multiplication w/o compression: worked, however memory usage was
+far too low, and execution time was too quick (~3 seconds)
+
+solving sparse matrix linear system: worked, however memory usage was lacking,
+and cholmod_analyze takes too long with larger matrices b/c it only uses one
+core.
+
+multiplying sparse matrices: in progress
