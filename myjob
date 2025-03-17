@@ -8,6 +8,7 @@ module purge
 ml GCC/13.3.0
 ml OpenMPI/5.0.3
 ml SuiteSparse/7.7.0-METIS-5.1.0
+export OMP_NUM_THREADS=96
 export WATCH_SECONDS=1
 export NUM_THREADS=96
 cd /scratch/user/u.ks124812/wes_benchmarking/sparse_matrix_benchmark

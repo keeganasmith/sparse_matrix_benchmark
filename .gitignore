@@ -4,3 +4,4 @@ cholesky
 *.log
 *.mtx
 matrix
+open
