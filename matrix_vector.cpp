@@ -65,13 +65,13 @@ cholmod_dense* generate_random_dense_vector(cholmod_common* c, long long n, bool
 
 
 cholmod_dense* generate_B(cholmod_common* c, cholmod_sparse* A, long long n){
-	cholmod_dense* x = generate_random_dense_vector(c, n, false);
-	cholmod_dense* B = cholmod_l_zeros(A->nrow, 1, CHOLMOD_REAL, c);
-	double alpha = 1.0;
-	double beta = 0.0;
-	cholmod_l_sdmult(A, 0, &alpha, &beta, x, B, c);
-	cholmod_l_free_dense(&x, c);
-	return B;
+  cholmod_dense* x = generate_random_dense_vector(c, n, false);
+  cholmod_dense* B = cholmod_l_zeros(A->nrow, 1, CHOLMOD_REAL, c);
+  double alpha = 1.0;
+  double beta = 0.0;
+  cholmod_l_sdmult(A, 0, &alpha, &beta, x, B, c);
+  cholmod_l_free_dense(&x, c);
+  return B;
 }
 
 double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common* c,  std::chrono::time_point<std::chrono::high_resolution_clock>& start_time) {
@@ -94,25 +94,25 @@ double benchmark_sparse_vector_multiplication(cholmod_sparse* A, cholmod_common*
 }
 double benchmark_sparse_solve(cholmod_sparse* A, cholmod_dense* B, cholmod_common* c){
   cout << "made it to factorization\n";
- 	cholmod_factor* L = cholmod_l_analyze(A, c);
-	if (!L) {
-			std::cerr << "cholmod_analyze failed.\n";
-			return -1;
-	} 
-	if (!cholmod_factorize(A, L, c)) {
-		std::cerr << "cholmod_factorize failed.\n";
-		cholmod_l_free_factor(&L, c);
-		return -1;
-	}
+  cholmod_factor* L = cholmod_l_analyze(A, c);
+  if (!L) {
+      std::cerr << "cholmod_analyze failed.\n";
+      return -1;
+  } 
+  if (!cholmod_factorize(A, L, c)) {
+    std::cerr << "cholmod_factorize failed.\n";
+    cholmod_l_free_factor(&L, c);
+    return -1;
+  }
   cout << "Finished analyzing, starting solving\n";
-	auto start = std::chrono::high_resolution_clock::now();
-	cholmod_sparse* X = (cholmod_sparse*)cholmod_l_solve(CHOLMOD_A, L, B, c);
-	auto end = std::chrono::high_resolution_clock::now();
-	cholmod_l_free_sparse(&X, c);
-	cholmod_l_free_factor(&L, c);
+  auto start = std::chrono::high_resolution_clock::now();
+  cholmod_sparse* X = (cholmod_sparse*)cholmod_l_solve(CHOLMOD_A, L, B, c);
+  auto end = std::chrono::high_resolution_clock::now();
+  cholmod_l_free_sparse(&X, c);
+  cholmod_l_free_factor(&L, c);
   cout << "solve finished\n";
-	std::chrono::duration<double> elapsed = end - start;
-	return elapsed.count();
+  std::chrono::duration<double> elapsed = end - start;
+  return elapsed.count();
 }
 int main(int argc, char* argv[]) {
   auto start_time = std::chrono::high_resolution_clock::now(); 
@@ -159,7 +159,7 @@ int main(int argc, char* argv[]) {
   cholmod_l_print_sparse(A, "Sparse Matrix", &c);
 
   //double time_taken = benchmark_sparse_vector_multiplication(A, &c, start_time);
- 	double time_taken = benchmark_sparse_solve(A, B, &c); 
+  double time_taken = benchmark_sparse_solve(A, B, &c); 
   if (time_taken >= 0) {
       std::cout << "Sparse matrix-vector multiplication for " << n << "x" << n
                 << " matrix took " << time_taken << " seconds." << std::endl;
