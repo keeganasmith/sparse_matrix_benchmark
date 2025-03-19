@@ -1,1 +1,1 @@
-This benchmark generates a large $10^6$ by $10^6$ sparse matrix where approximately 1% of the values are random values between 0 and 1, and all other values are 0. This matrix is multiplied by a dense vector populated by random numbers between 0 and 1.
+This benchmark generates a large $175000$ by $175000$ sparse matrix where approximately 1% of the values on each row are non zero values uniformly randomly generated between 0 and 1. This benchmark uses the intel Math Kernel Library.
