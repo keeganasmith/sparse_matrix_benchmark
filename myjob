@@ -5,17 +5,17 @@
 #SBATCH --output=out.log --error=error.log
 #SBATCH --partition=staff
 module purge
-ml GCC/13.3.0
-ml OpenMPI/5.0.3
-ml SuiteSparse/7.7.0-METIS-5.1.0
 export OMP_NUM_THREADS=96
 export WATCH_SECONDS=1
 export NUM_THREADS=96
 cd /scratch/user/u.ks124812/wes_benchmarking/sparse_matrix_benchmark
+source modules.sh
+module list
+g++ --version
 make -B matrix
-for(( j=0 ; j<1 ; j++ ))
+for(( j=0 ; j<3 ; j++ ))
 do 
-  for i in 1050000; do
+  for i in 175000; do
     > ./meminfo_output_run_$j/meminfo_$i.log
     > ./ps_output_run_$j/ps_output_$i.log
     > ./free_output_run_$j/free_output_$i.log
